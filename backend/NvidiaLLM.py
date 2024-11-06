@@ -23,6 +23,9 @@ class NvidiaLLM:
             "frequency_penalty": 0,
             "presence_penalty": 0,
             "seed": 0,
+            "response_format": {
+                "type": "json_object"
+            },
             "messages": [
                 {
                     "role": "system",
@@ -51,8 +54,9 @@ class NvidiaLLM:
         return 'HTTP Response Not OK'
 
 
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 api_key = os.getenv("NIM_KEY")
 chatBot = NvidiaLLM(api_key)
 prompt = 'Tell me a one sentence joke about surveys'
 response = chatBot.get_LLM_response(prompt)
-print(response) 
+print(response)

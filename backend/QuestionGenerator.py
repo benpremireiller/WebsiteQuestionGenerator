@@ -10,16 +10,18 @@ class WebsiteQuestionGenerator:
         self.NvidiaLLM = NvidiaLLM(LLM_API_KEY)
         self.scraper = WebsiteScraper()
         
-    def get_questions_for_site(self, site):
+    def get_questions_for_site(self, site, question_count=1):
 
         website_data = self.scraper.get_website_data(site)
 
-        prompt_head= """Given the following array where each element is data from a particular webpage all on the same domain,  
-                        and each element's data includes a webpage title and counts of the most common words in the headers and paragraphs, 
-                        infer what the purpose of the website is and create one multiple choice survey question with 4 answers which 
-                        you would ask to a user to gauge their interest in the content."""
+        prompt_head= "Given the following array where each element is data from a particular webpage all on the same domain, " +\
+                     "infer what the purpose of the website is and create " + str(question_count) + " multiple choice survey " +\
+                     "question with 4 answers which you would ask to a user to engage their interest in the content."
         prompt_body = str(website_data)
-        prompt_tail = 'Do not reference the website by name, do not include any text formatting and respond with only one question and nothing else.'
+        prompt_tail = 'Do not reference the website by name, do not include your reasoning and respond with only question(s) in the following JSON format '+\
+                      '[{question_text: question_you_wrote, response_type: multiple_choice, options: [option1, option2, option3, option4]}] and nothing else. '+\
+                      'Keep your answers short and try to include specific facts, products or events you identified in the data.'
+
         
         prompt = prompt_head + '\n' + prompt_body + '\n' + prompt_tail
         
@@ -29,13 +31,3 @@ class WebsiteQuestionGenerator:
 
 
 
-api_key = os.getenv("NIM_KEY")
-chatBot = NvidiaLLM(api_key)
-prompt = 'Tell me a one sentence joke about surveys'
-response = chatBot.get_LLM_response(prompt)
-print(response)
-
-api_key = os.getenv("NIM_KEY")
-generator = WebsiteQuestionGenerator(api_key)
-answer = generator.get_questions_for_site('https://techcrunch.com')
-print(answer)
