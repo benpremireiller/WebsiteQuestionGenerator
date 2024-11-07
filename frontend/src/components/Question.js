@@ -2,11 +2,19 @@ import React from 'react';
 
 function Question({question}){
     
+    if (question === ''){
+        return
+    }
+
     return (
-        <p className="question">
+        <div className="question">
         {question.question_text}
-        {question.options}
-        </p>
+        <ol>
+        {question.options.map((q, i) => (
+            <li>{q}</li>
+            ))}
+        </ol>
+        </div>
 
     )
 }

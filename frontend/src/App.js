@@ -1,19 +1,19 @@
 import './App.css';
 import React, { useState } from 'react';
-import Question from './components/Question'
+import Questions from './components/Questions'
 
 function App() {
 
   const [url, setURL] = useState('');
-  const [question, SetQuestion] = useState('')
+  const [questions, SetQuestions] = useState('')
 
   const getSurveyQuestion = async () => {
     const endpoint = `api/questions?url=${url}`
 
     try {
       const response = await fetch(endpoint)
-      const responseQuestion = await response.json()
-      SetQuestion(responseQuestion)
+      const responseQuestions = await response.json()
+      SetQuestions(responseQuestions)
 
     } catch (error) {
       return alert("Error. Unable to retreive question.")
@@ -34,7 +34,8 @@ function App() {
             />
             <button onClick={getSurveyQuestion}>Send</button>
           </div>
-          <Question question={question}/>
+          <p></p>
+          <Questions questions={questions}/>
       </header>
     </div>
   );

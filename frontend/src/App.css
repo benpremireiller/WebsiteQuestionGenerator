@@ -29,8 +29,20 @@ button {
   margin-left:5px;
 }
 
+.all-questions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 20px; 
+}
+
 .question {
-  border: 1px solid black
+  border: 1px solid rgba(0, 0, 0, 0.223);
+  width: 40%;
+  padding: 12px;
+  text-align: left;
+  align-items: center;
 }
 
 .App-header {

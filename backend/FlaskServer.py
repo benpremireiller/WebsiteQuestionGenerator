@@ -19,6 +19,5 @@ def send_survey_questions():
 
     return jsonify(response='No URL passed')
     
-
 if __name__ == '__main__':
     app.run(debug=True)

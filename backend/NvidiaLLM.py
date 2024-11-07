@@ -11,25 +11,22 @@ class NvidiaLLM:
         self.url = 'https://integrate.api.nvidia.com/v1/chat/completions'
         self.model  = model
 
-    def get_LLM_response(self, prompt):
+    def get_LLM_response(self, context, prompt):
         
         payload = {
             "model": self.model,
             "max_tokens": 1024,
             "stream": False,
-            "temperature": 0.5,
+            "temperature": 0.2, # Keep deterministic
             "top_p": 1,
             "stop": None,
             "frequency_penalty": 0,
             "presence_penalty": 0,
             "seed": 0,
-            "response_format": {
-                "type": "json_object"
-            },
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are an expert survey researcher."
+                    "content": context
                 },
                 {
                     "role": "user",
@@ -44,8 +41,11 @@ class NvidiaLLM:
             "authorization": "Bearer " + self.api_key
         }
 
-        http_response = requests.post(self.url, json=payload, headers=headers)
-
+        try:
+            http_response = requests.post(self.url, json=payload, headers=headers, timeout=10)
+        except:
+            return "HTTP post request timed out or was not successful."
+        
         if http_response.status_code == 200:
             json_content = json.loads(http_response.content.decode('utf-8'))
             LLM_response = json_content['choices'][0]['message']['content'].strip('"')
@@ -54,9 +54,9 @@ class NvidiaLLM:
         return 'HTTP Response Not OK'
 
 
-load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+"""load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 api_key = os.getenv("NIM_KEY")
 chatBot = NvidiaLLM(api_key)
 prompt = 'Tell me a one sentence joke about surveys'
 response = chatBot.get_LLM_response(prompt)
-print(response)
+print(response)"""
