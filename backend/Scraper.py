@@ -10,34 +10,37 @@ class WebsiteScraper:
     def __init__(self):
         pass
 
-    def get_website_data(self, home_page_url, page_limit = 7):
+    def get_website_data(self, user_provided_url, scrape_page_limit = 5):
         
         content = []
+
+        # Access the page the user provided
         try:
-            root_response = requests.get(home_page_url)
+            root_response = requests.get(user_provided_url)
         except:
-            raise Exception('Unable to retrieve data from: ' + home_page_url)
+            raise Exception('Unable to retrieve data from: ' + user_provided_url)
         
         root_soup = BeautifulSoup(root_response.text, 'html.parser')
 
-        stripped_home_page_url = home_page_url[:-1] if home_page_url[-1] == '/' else home_page_url # Remove ending slash if exists
+        stripped_user_provided_url = user_provided_url[:-1] if user_provided_url[-1] == '/' else user_provided_url # Remove ending slash if exists
         
-        # Get the first navigation page anchor tags on the site
+        # Get the first navigation anchor tags on the site
         navs = root_soup.find('nav')
         href_urls = navs.find_all('a', attrs={"href": True}) if navs else [] 
         
-        sites_to_scrape = [home_page_url] + [stripped_home_page_url + url.get('href') for url in href_urls] 
+        sites_to_scrape = [user_provided_url] + [stripped_user_provided_url + url.get('href') for url in href_urls] 
         
         already_scraped = set() # To avoid scraping the same site
 
+        # Scrape up to scrape_page_limit pages on the domain
         i = 0
-        while i < min(page_limit, len(sites_to_scrape)): 
+        while i < min(scrape_page_limit, len(sites_to_scrape)): 
             site = sites_to_scrape[i]
             if site not in already_scraped:
                 try:
                     site_data = self.scrape_url(site)
                 except:
-                    print('Scrape failed for site:', site)
+                    print('Unable to scrape site:', site)
                     i += 1
                     continue
 
@@ -57,7 +60,6 @@ class WebsiteScraper:
         title = soup.find('title').get_text() if soup.find('title') else []
         headers = [h.get_text().replace('\n', '').replace('\t', '') for h in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5'])]
         paragraphs = [p.get_text().replace('\n', '').replace('\t', '') for p in soup.find_all('p')]
-        # TODO Add text from <a> and maybe <div> tags
 
         output = {'title': title, 'headers': headers, 'paragraphs': paragraphs}
 
@@ -69,7 +71,7 @@ class WebsiteScraper:
         headers = site_data['headers']
         paragraph_text = ' '.join(site_data['paragraphs'])
         
-        compressed_paragraphs = self.get_most_frequent_words(paragraph_text, 50)
+        compressed_paragraphs = self.get_most_frequent_words(paragraph_text) 
 
         compressed_site_data = {'title': title, 'headers': headers, 'paragraphs': compressed_paragraphs}
 

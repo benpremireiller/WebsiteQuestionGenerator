@@ -17,7 +17,7 @@ class NvidiaLLM:
             "model": self.model,
             "max_tokens": 1024,
             "stream": False,
-            "temperature": 0.2, # Keep deterministic
+            "temperature": 0.8, # Higher 'creativity' seems to generate better responses
             "top_p": 1,
             "stop": None,
             "frequency_penalty": 0,
@@ -42,7 +42,7 @@ class NvidiaLLM:
         }
 
         try:
-            http_response = requests.post(self.url, json=payload, headers=headers, timeout=10)
+            http_response = requests.post(self.url, json=payload, headers=headers, timeout=30)
         except:
             return "HTTP post request timed out or was not successful."
         
@@ -57,6 +57,7 @@ class NvidiaLLM:
 """load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 api_key = os.getenv("NIM_KEY")
 chatBot = NvidiaLLM(api_key)
+context = 'You are an expert survey researcher'
 prompt = 'Tell me a one sentence joke about surveys'
-response = chatBot.get_LLM_response(prompt)
+response = chatBot.get_LLM_response(context, prompt)
 print(response)"""
