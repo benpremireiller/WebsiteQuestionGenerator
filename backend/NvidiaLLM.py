@@ -1,5 +1,3 @@
-from dotenv import load_dotenv
-import os
 import requests
 import json
 
@@ -11,7 +9,8 @@ class NvidiaLLM:
         self.url = 'https://integrate.api.nvidia.com/v1/chat/completions'
         self.model  = model
 
-    def get_LLM_response(self, context, prompt):
+    def get_LLM_response(self, context, prompt) -> str:
+        """Return a response from the LLM using context and a prompt"""
         
         payload = {
             "model": self.model,
@@ -44,20 +43,12 @@ class NvidiaLLM:
         try:
             http_response = requests.post(self.url, json=payload, headers=headers, timeout=30)
         except:
-            return "HTTP post request timed out or was not successful."
+            raise Exception("No response from NIMs")
         
         if http_response.status_code == 200:
             json_content = json.loads(http_response.content.decode('utf-8'))
             LLM_response = json_content['choices'][0]['message']['content'].strip('"')
             return LLM_response
         
-        return 'HTTP Response Not OK'
+        raise Exception("HTTP response not OK")
 
-
-"""load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
-api_key = os.getenv("NIM_KEY")
-chatBot = NvidiaLLM(api_key)
-context = 'You are an expert survey researcher'
-prompt = 'Tell me a one sentence joke about surveys'
-response = chatBot.get_LLM_response(context, prompt)
-print(response)"""

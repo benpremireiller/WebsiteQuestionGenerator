@@ -10,7 +10,8 @@ app = Flask(__name__)
 
 @app.route('/api/questions', methods = ['GET'])
 def send_survey_questions():
-    
+    """Serve survey questions to frontend"""
+
     url = request.args.get('url')
     if url is not None:
         answer = generator.get_questions_for_site(url)

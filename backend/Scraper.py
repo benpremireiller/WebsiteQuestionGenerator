@@ -1,36 +1,36 @@
 import requests
-from bs4 import BeautifulSoup
-from collections import defaultdict
-import spacy
-
-nlp = spacy.load("en_core_web_sm")
+from bs4 import BeautifulSoup, NavigableString
+from furl import furl
 
 class WebsiteScraper:
 
     def __init__(self):
         pass
 
-    def get_website_data(self, user_provided_url, scrape_page_limit = 5):
+    def get_website_data(self, user_provided_url, scrape_page_limit = 3) -> list[dict]:
+        """Return data about a website by scraping the content passed webpage and related navigation pages"""
         
         content = []
+        parsed_url = self.standardize_url(user_provided_url)
 
         # Access the page the user provided
         try:
-            root_response = requests.get(user_provided_url)
+            root_response = requests.get(parsed_url)
         except:
-            raise Exception('Unable to retrieve data from: ' + user_provided_url)
+            raise Exception('Unable to retrieve data from: ' + parsed_url)
         
-        root_soup = BeautifulSoup(root_response.text, 'html.parser')
+        soup = BeautifulSoup(root_response.text, 'html.parser')
 
-        stripped_user_provided_url = user_provided_url[:-1] if user_provided_url[-1] == '/' else user_provided_url # Remove ending slash if exists
-        
         # Get the first navigation anchor tags on the site
-        navs = root_soup.find('nav')
+        navs = soup.find('nav')
         href_urls = navs.find_all('a', attrs={"href": True}) if navs else [] 
         
-        sites_to_scrape = [user_provided_url] + [stripped_user_provided_url + url.get('href') for url in href_urls] 
+        # Add all nav anchors to scrape list
+        sites_to_scrape = [parsed_url]
+        hrefs = [parsed_url + url.get('href')[1:] if url.get('href')[0] == '/' else parsed_url + url.get('href') for url in href_urls] 
+        sites_to_scrape = sites_to_scrape + hrefs
         
-        already_scraped = set() # To avoid scraping the same site
+        already_scraped = [] # To avoid scraping the same page
 
         # Scrape up to scrape_page_limit pages on the domain
         i = 0
@@ -38,60 +38,76 @@ class WebsiteScraper:
             site = sites_to_scrape[i]
             if site not in already_scraped:
                 try:
-                    site_data = self.scrape_url(site)
+                    site_data = self.scrape_webpage(site)
+                    content.append(site_data)
+                    already_scraped.append(site)
                 except:
                     print('Unable to scrape site:', site)
-                    i += 1
-                    continue
-
-                compressed_data = self.compress_site_data(site_data)
-                content.append(compressed_data)
-                already_scraped.add(site)
             i += 1
 
         return content
 
 
-    def scrape_url(self, url):
+    def scrape_webpage(self, url) -> dict:
+        """Scrape a url, trim the response and return the remaining html"""
 
+        # Download the page html
         response = requests.get(url)
         soup = BeautifulSoup(response.text, 'html.parser')
 
         title = soup.find('title').get_text() if soup.find('title') else []
-        headers = [h.get_text().replace('\n', '').replace('\t', '') for h in soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5'])]
-        paragraphs = [p.get_text().replace('\n', '').replace('\t', '') for p in soup.find_all('p')]
 
-        output = {'title': title, 'headers': headers, 'paragraphs': paragraphs}
+        # Only keep tags related to headers and paragraphs, plus divs for structure
+        tags_to_keep = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'div']
+        content_str = self.strain_soup(soup, tags_to_keep)
+
+        output = {'title': title, 'contents': content_str}
 
         return output
 
-    def compress_site_data(self, site_data):
+    def strain_soup(self, soup, tags_to_keep) -> str:
+        """Strain or trim soup object to only tags passed in tags_to_keep"""
 
-        title = site_data['title']
-        headers = site_data['headers']
-        paragraph_text = ' '.join(site_data['paragraphs'])
-        
-        compressed_paragraphs = self.get_most_frequent_words(paragraph_text) 
+        # Keep only the tags required
+        for tag in soup.find_all():
+            if tag.name not in tags_to_keep:
+                for element in tag.children:
+                    if isinstance(element, NavigableString): # Remove strings that are direct children of tags we want to remove
+                        element.extract()
+                tag.unwrap()
+            else:
+                tag.attrs = {}
 
-        compressed_site_data = {'title': title, 'headers': headers, 'paragraphs': compressed_paragraphs}
+        # Strip whitespace
+        for element in soup.find_all(string=lambda text: not text.strip()):
+            element.extract()
 
-        return compressed_site_data
+        # Flatten structure
+        for tag in soup.find_all():
+            empty_container = len(list(tag.children)) == 0
+            only_same_children = all([element.name == tag.name for element in tag.children])
 
+            if tag.get_text().strip() == '': # No text in any descendents
+                tag.extract()
 
-    def get_most_frequent_words(self, text, n):
-        
-        doc = nlp(text)
+            elif empty_container or only_same_children:
+                tag.unwrap()
 
-        focused_word_counts = defaultdict(int)
-        POS_tags_to_keep = ['NOUN', 'VERB', 'PROPN']
+        return str(soup)
+    
+    def standardize_url(self, url) -> str:
+        """Standardize URLs by adding/modifying protocol and path"""
 
-        for token in doc:
-            if token.pos_ in POS_tags_to_keep and not token.is_stop:
-                focused_word_counts[token.lower_] += 1
+        f = furl(url)
 
-        highest_n_occurences = sorted(focused_word_counts.items(), key=lambda x: x[1], reverse=True)[:min(n, len(focused_word_counts))]
-        return highest_n_occurences
+        # Standardize to http
+        if f.scheme != 'http':
+            f.scheme = 'http'
 
+        if not f.path:
+            f.path = '/'
+
+        return f.url
 
 
 
