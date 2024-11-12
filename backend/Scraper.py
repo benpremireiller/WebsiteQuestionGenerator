@@ -98,6 +98,10 @@ class WebsiteScraper:
     def standardize_url(self, url) -> str:
         """Standardize URLs by adding/modifying protocol and path"""
 
+        # Add protocol
+        if not url.startswith(('http://', 'https://')):
+            url = 'http://' + url
+
         f = furl(url)
 
         # Standardize to http
