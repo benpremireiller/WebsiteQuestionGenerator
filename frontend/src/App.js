@@ -12,7 +12,6 @@ function App() {
 
   const getSurveyQuestion = async () => {
 
-    setQuestions('')
     const endpoint = `api/questions?url=${url}`
 
     try {
