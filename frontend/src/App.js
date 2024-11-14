@@ -31,10 +31,10 @@ function App() {
     <>
     <body>
       <header className="header">
-        <div>Website Question Generator</div>
+        <div>Website Visitor Classifier</div>
       </header>
       <div className='main'>
-        <h2>Generate survey questions for any website dynamically.</h2>
+        <h2>Generate user classification questions for any website dynamically.</h2>
         <div className='url-input-container'>
             <input 
               className='url-input-box'

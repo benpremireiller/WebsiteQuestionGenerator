@@ -14,7 +14,7 @@ class WebsiteQuestionGenerator:
         self.cache = redis_cache
 
     def with_cache(self, method):
-        """Create a wrapper that applies the cache decorator when get_questions_for_site is called"""
+        """Create a wrapper that applies the cache decorator to get_questions_for_site"""
 
         def wrapped(*args, **kwargs):
             

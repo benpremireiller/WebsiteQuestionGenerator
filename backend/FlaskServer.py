@@ -14,7 +14,7 @@ cache_client = redis.Redis(host='localhost', port=6379, db=0)
 cache = APICache(cache_client)
 
 # Create question generator
-generator = WebsiteQuestionGenerator(cache_client, os.getenv("NIM_KEY"))
+generator = WebsiteQuestionGenerator(cache, os.getenv("NIM_KEY"))
 
 app = Flask(__name__)
 
