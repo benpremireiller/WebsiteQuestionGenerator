@@ -16,7 +16,7 @@ class APICache:
         @wraps(func)
         def wrapper(*args, **kwargs):
 
-            # Use the URL directly as key, but prefix it to avoid collisions
+            # Use the func name and args to get a unique key
             cache_key = f"{func.__name__}_{args}_{kwargs}"
             
             # Try to get from cache
@@ -25,7 +25,7 @@ class APICache:
                 return cached
                 
             # If not in cache, make the function call
-            response = func()
+            response = func(*args, **kwargs)
             
             # Cache the new response
             self.redis.setex(

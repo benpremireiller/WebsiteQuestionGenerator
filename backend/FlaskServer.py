@@ -3,18 +3,19 @@ from QuestionGenerator import WebsiteQuestionGenerator
 import os
 from dotenv import load_dotenv
 import redis
-from backend.RedisCache import APICache 
+from RedisCache import APICache 
 
 # Load env variables
 path_to_env = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(path_to_env)
+NIM_key = os.getenv("NIM_KEY")
 
 # Create cache 
 cache_client = redis.Redis(host='localhost', port=6379, db=0)
 cache = APICache(cache_client)
 
 # Create question generator
-generator = WebsiteQuestionGenerator(cache, os.getenv("NIM_KEY"))
+generator = WebsiteQuestionGenerator(cache, NIM_key)
 
 app = Flask(__name__)
 

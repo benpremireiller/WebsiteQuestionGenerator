@@ -1,7 +1,7 @@
-from dotenv import load_dotenv
 import json
 from NvidiaLLM import NvidiaLLM
 from Scraper import WebsiteScraper
+from functools import wraps
 
 
 class WebsiteQuestionGenerator:
@@ -13,17 +13,18 @@ class WebsiteQuestionGenerator:
         self.scraper = WebsiteScraper()
         self.cache = redis_cache
 
-    def with_cache(self, method):
+    def cache_decorator(method):
         """Create a wrapper that applies the cache decorator to get_questions_for_site"""
 
-        def wrapped(*args, **kwargs):
+        @wraps(method)
+        def wrapped(self, *args, **kwargs):
             
             cached_method = self.cache.cache_response(method)
-            return cached_method(*args, **kwargs)
+            return cached_method(self, *args, **kwargs)
         
         return wrapped
     
-    @with_cache    
+    @cache_decorator    
     def get_questions_for_site(self, site, question_count=2) -> json:
         """Return n survey questions for the provided website"""
 
